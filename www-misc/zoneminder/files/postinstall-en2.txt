@@ -1,0 +1,23 @@
+
+If this is a new installation, you will need to create a MySQL database
+for ${PN} to use. (see http://www.gentoo.org/doc/en/mysql-howto.xml).
+
+Once you've completed that you should execute the following:
+
+1.  Create the tables and schema for ZoneMinder to use:
+
+    cd /usr/share/${PN}
+    mysql -u <my_database_user> -p<my_database_pass> <my_zoneminder_db> < db/zm_create.sql
+
+Alternatively, if you are upgrading, you will need to run the zmupdate.pl script:
+
+    /usr/bin/zmupdate.pl version=<from version> [--user=<my_database_user> --pass=<my_database_pass>]
+
+2.  Set your database settings in /etc/zm.conf
+
+3.  Start the ${PN} daemon:
+
+    /etc/init.d/${PN} start"
+
+4.  Finally point your browser to http://localhost/${PN}
+

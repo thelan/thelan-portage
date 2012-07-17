@@ -1,0 +1,27 @@
+--- old/Makefile.am	2008-02-25 02:49:53.000000000 -0700
++++ new/Makefile.am	2009-06-09 15:19:12.000000000 -0600
+@@ -19,9 +19,8 @@
+ # Yes, you are correct. This is a HACK!
+ install-data-hook:
+ 	( cd $(DESTDIR)$(sysconfdir); chown $(webuser):$(webgroup) $(sysconf_DATA); chmod 600 $(sysconf_DATA) )
+-	-( if ! test -e $(RUNDIR); then mkdir $(RUNDIR); fi )
+-	( if ! test -e $(ZM_RUNDIR); then mkdir $(ZM_RUNDIR); fi; chown $(webuser):$(webgroup) $(ZM_RUNDIR); chmod u+w $(ZM_RUNDIR) )
++	( if ! test -e $(DESTDIR)$(ZM_RUNDIR); then mkdir -pv ($DESTDIR)$(ZM_RUNDIR); fi; chown $(webuser):$(webgroup) $(DESTDIR)$(ZM_RUNDIR); chmod u+w $(DESTDIR)$(ZM_RUNDIR) )
+ 
+ uninstall-hook:
+ 	@-( cd $(DESTDIR)$(webdir); rm -rf events graphics images sounds temp )
+-	@-( rm -rf $(ZM_RUNDIR) )
++	@-( rm -rf $(DESTDIR)$(ZM_RUNDIR) )
+diff -u old/Makefile.in new/Makefile.in
+--- old/Makefile.in	2009-02-23 03:57:10.000000000 -0700
++++ new/Makefile.in	2009-06-09 15:22:18.000000000 -0600
+@@ -708,8 +708,7 @@
+ # Yes, you are correct. This is a HACK!
+ install-data-hook:
+ 	( cd $(DESTDIR)$(sysconfdir); chown $(webuser):$(webgroup) $(sysconf_DATA); chmod 600 $(sysconf_DATA) )
+-	-( if ! test -e $(RUNDIR); then mkdir $(RUNDIR); fi )
+-	( if ! test -e $(ZM_RUNDIR); then mkdir $(ZM_RUNDIR); fi; chown $(webuser):$(webgroup) $(ZM_RUNDIR); chmod u+w $(ZM_RUNDIR) )
++	( if ! test -e $(DESTDIR)$(ZM_RUNDIR); then mkdir -pv $(DESTDIR)$(ZM_RUNDIR); fi; chown $(webuser):$(webgroup) $(DESTDIR)$(ZM_RUNDIR); chmod u+w $(DESTDIR)$(ZM_RUNDIR) )
+ 
+ uninstall-hook:
+ 	@-( cd $(DESTDIR)$(webdir); rm -rf events graphics images sounds temp )
