@@ -1,0 +1,22 @@
+#!/sbin/runscript
+# Copyright 1999-2003 Gentoo Technologies, Inc.
+# Distributed under the terms of the GNU General Public License, v2 or later
+
+#NB: Config is in /etc/conf.d/bonding
+
+depend() {
+	need net snmpd
+}
+
+start() {
+	ebegin "Starting HPASM"
+	/opt/compaq/hpasm/etc/hpasm start
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping HPASM"
+	/opt/compaq/hpasm/etc/hpasm stop
+	eend $?
+}
+

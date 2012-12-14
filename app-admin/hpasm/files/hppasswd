@@ -1,0 +1,35 @@
+#!/bin/bash
+
+
+case "$1" in
+	change)
+	
+	/opt/compaq/foundation/etc/hpwebsetup -v
+	
+	echo; echo "Configuring Passwords"; echo
+	
+	echo "Please Enter an Operator password"
+	read -s PASSWD
+	/opt/compaq/foundation/etc/hpwebsetup -pO:$PASSWD -f
+	
+	echo "Please Enter an Administrator password"
+	read -s PASSWD
+	/opt/compaq/foundation/etc/hpwebsetup -pA:$PASSWD -f
+	
+	echo "Please Enter an User password"
+	read -s PASSWD
+	/opt/compaq/foundation/etc/hpwebsetup -pU:$PASSWD -f
+	
+	;;
+	
+	disable)
+	rm -rf /var/spool/compaq/wbem/CPQHMMD.ACL
+	echo "Passwords disabled. Run \"hppasswd change\" to reenable."
+    ;;
+	
+	*)
+	echo "Usage: $0 {change|disable}"
+																																						        exit 1
+																																								esac
+																																								exit 0
+																																										

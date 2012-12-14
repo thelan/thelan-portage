@@ -1,0 +1,9 @@
+# ChangeLog for app-admin/hpasm
+# Copyright 2000-2004 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+*cmastor-7.1.0.12.1(28 Jul 2004)
+
+  28 Jul 2004; Jan Seidel <tuxus@gentoo.org> cmastor-7.1.0.12.1.ebuild:
+  initial version 7.1
+
