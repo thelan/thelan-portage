@@ -1,0 +1,4 @@
+PATH="/opt/vc/bin/:/opt/vc/sbin"
+ROOTPATH="/opt/vc/bin/:/opt/vc/sbin"
+LDPATH="/opt/vc/lib/"
+OPENGL_PROFILE="raspberrypi"
