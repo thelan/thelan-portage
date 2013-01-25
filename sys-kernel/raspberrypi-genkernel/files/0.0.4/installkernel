@@ -1,0 +1,25 @@
+#!/bin/sh
+base="kernel.img"
+map="System.map"
+
+if [ -z "$4" ]; then
+	echo "Usage: $0 <kernel-version> <Image-file> <System.map> <destination>"
+	exit 1
+fi
+
+if [ "$(basename $2)" != "Image" ]; then
+	echo "Error: Please provide uncompressed kernel Image(s) only"
+	exit 1
+fi
+
+if [ -f $4/$base ] ; then
+	mv $4/$base $4/$base.old
+fi
+
+if [ -f $4/$map ] ; then
+	mv $4/$map $4/$map.old
+fi
+
+echo "Installing kernel Image version $1 to $4"
+cp -a $3 $4/$map
+cp -a $2 $4/$base

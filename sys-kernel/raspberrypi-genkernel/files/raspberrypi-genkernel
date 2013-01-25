@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Fix buggy kallsyms run in 3.1.9
+KV="$( eselect kernel show | grep linux | awk -F '-' '{ print $2; }' )"
+if [ "${KV}" == "3.1.9" ]; then
+	export KALLSYMS_EXTRA_PASS=1
+fi
+
+cd /usr/src/linux && \
+	make -j4 CC="##DISTCC##gcc" Image modules && \
+	make CC="##DISTCC##gcc" modules_install && \
+	make CC="##DISTCC##gcc" install && \
+	depmod -a -F /usr/src/linux/System.map && \
+	rm -f /usr/src/linux/first32k.bin

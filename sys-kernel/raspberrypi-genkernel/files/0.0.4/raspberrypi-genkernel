@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd /usr/src/linux && \
+	make -j4 CC="##DISTCC##gcc" zImage modules && \
+	make CC="##DISTCC##gcc" modules_install && \
+	make CC="##DISTCC##gcc" install && \
+	depmod -a -F /usr/src/linux/System.map
