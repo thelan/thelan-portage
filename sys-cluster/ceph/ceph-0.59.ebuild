@@ -35,6 +35,12 @@ CDEPEND="
 	)
 	tcmalloc? ( dev-util/google-perftools )
 	"
+
+# New CDEBEND Added by thelan
+CDEPEND="${CDEPEND}
+	app-arch/snappy
+	dev-libs/leveldb"
+
 DEPEND="${CDEPEND}
 	virtual/pkgconfig"
 RDEPEND="${CDEPEND}
@@ -50,7 +56,7 @@ src_prepare() {
 	sed -e '/testsnaps/d' -i src/Makefile.am || die
 	sed -e "/bin=/ s:lib:$(get_libdir):" "${FILESDIR}"/${PN}.initd \
 		> "${T}"/${PN}.initd || die
-	sed -i -e '/AM_INIT_AUTOMAKE/s:-Werror ::' src/leveldb/configure.ac || die #423755
+#	sed -i -e '/AM_INIT_AUTOMAKE/s:-Werror ::' src/leveldb/configure.ac || die #423755
 	eautoreconf
 }
 
