@@ -1,25 +1,25 @@
 diff -Naur mod_auth_mysql-3.0.0.orig/mod_auth_mysql.c mod_auth_mysql-3.0.0/mod_auth_mysql.c
---- mod_auth_mysql-3.0.0.orig/mod_auth_mysql.c	2005-06-22 18:17:45.000000000 +0200
-+++ mod_auth_mysql-3.0.0/mod_auth_mysql.c	2013-04-05 15:01:30.000000000 +0200
-@@ -287,6 +287,7 @@
- #if _AES
+--- mod_auth_mysql-3.0.0.orig/mod_auth_mysql.c	2013-04-05 15:06:40.000000000 +0200
++++ mod_auth_mysql-3.0.0/mod_auth_mysql.c	2013-04-05 15:08:03.000000000 +0200
+@@ -288,6 +288,7 @@
  static short pw_aes(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
  #endif
-+static short pw_sha1_rm(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
  static short pw_sha1(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
++static short pw_sha1_rm(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
+ static short pw_apr(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
  static short pw_plain(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
  
-@@ -318,6 +319,7 @@
- #if _AES
+@@ -320,6 +321,7 @@
  					   {"aes", SALT_REQUIRED, pw_aes},
  #endif
+ 					   {"sha1", NO_SALT, pw_sha1},
 +					   {"sha1-rm", SALT_OPTIONAL, pw_sha1_rm},
- 					   {"sha1", NO_SALT, pw_sha1}};
+ 					   {"apr", NO_SALT, pw_apr}};
  typedef struct {		/* User formatting patterns */
    char pattern;			/* Pattern to match */
-@@ -837,6 +839,42 @@
+@@ -858,6 +860,42 @@
+   return  strcasecmp(bin2hex(pool, scrambled_sent_pw, enc_len), real_pw) == 0;
  }
- #endif
  
 +/* checks SHA1 passwords - adjusted for use with redmine */
 +static short pw_sha1_rm(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt) {
@@ -57,6 +57,6 @@ diff -Naur mod_auth_mysql-3.0.0.orig/mod_auth_mysql.c mod_auth_mysql-3.0.0/mod_a
 +  return  strcasecmp(bin2hex(pool, scrambled_salt_pw, enc_len), real_pw) == 0;
 +}
 +
- /* checks SHA1 passwords */
- static short pw_sha1(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt) {
-   char *scrambled_sent_pw, *buffer=PCALLOC(pool, 128);
+ /* checks passwords from htpasswd */
+ static short pw_apr(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt) {
+   /* apr_password_validate will do the job */
