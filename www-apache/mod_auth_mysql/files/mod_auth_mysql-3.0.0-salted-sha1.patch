@@ -9,14 +9,14 @@
  
  static char * format_remote_host(request_rec * r, char ** parm);
 @@ -318,7 +319,8 @@
-                                           {"aes", SALT_REQUIRED, pw_aes},
+                                            {"aes", SALT_REQUIRED, pw_aes},
  #endif
-                                           {"sha1", NO_SALT, pw_sha1},
--                                          {"apr", NO_SALT, pw_apr}};
-+					   {"apr", NO_SALT, pw_apr}},
-+					   {"sha1-rm", SALT_OPTIONAL, pw_sha1_rm}};
- typedef struct {		/* User formatting patterns */
-   char pattern;			/* Pattern to match */
+                                            {"sha1", NO_SALT, pw_sha1},
+-                                           {"apr", NO_SALT, pw_apr}};
++                                           {"apr", NO_SALT, pw_apr},
++                                           {"sha1-rm", SALT_OPTIONAL, pw_sha1_rm}};
+ typedef struct {                /* User formatting patterns */
+   char pattern;                 /* Pattern to match */
    char * (*func)(request_rec * r, char ** parm);
 @@ -856,6 +858,42 @@
    return  strcasecmp(bin2hex(pool, scrambled_sent_pw, enc_len), real_pw) == 0;
