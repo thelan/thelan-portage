@@ -29,7 +29,7 @@ DOCFILES="README CONFIGURE"
 need_apache2_2
 
 src_prepare() {
-	epatch "${FILESDIR}/${P}-salted-sha1.patch"
 	epatch "${FILESDIR}/${P}-apache-2.2.patch"
 	epatch "${FILESDIR}/${P}-htpasswd2-auth-style.patch"
+	epatch "${FILESDIR}/${P}-salted-sha1.patch"
 }
