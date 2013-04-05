@@ -1,19 +1,19 @@
 --- mod_auth_mysql-3.0.0/mod_auth_mysql.c.bak	2011-08-15 14:02:48.000000000 +0100
 +++ mod_auth_mysql-3.0.0/mod_auth_mysql.c	2011-08-16 18:03:17.000000000 +0100
 @@ -288,6 +288,7 @@
- static short pw_aes(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
  #endif
  static short pw_sha1(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
+ static short pw_apr(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
 +static short pw_sha1_rm(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
  static short pw_plain(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
  
  static char * format_remote_host(request_rec * r, char ** parm);
 @@ -318,7 +319,8 @@
- #if _AES
- 					   {"aes", SALT_REQUIRED, pw_aes},
+                                           {"aes", SALT_REQUIRED, pw_aes},
  #endif
--					   {"sha1", NO_SALT, pw_sha1}};
-+					   {"sha1", NO_SALT, pw_sha1},
+                                           {"sha1", NO_SALT, pw_sha1},
+-                                          {"apr", NO_SALT, pw_apr}};
++					   {"apr", NO_SALT, pw_apr}},
 +					   {"sha1-rm", SALT_OPTIONAL, pw_sha1_rm}};
  typedef struct {		/* User formatting patterns */
    char pattern;			/* Pattern to match */
