@@ -1,5 +1,7 @@
---- mod_auth_mysql-3.0.0/mod_auth_mysql.c	2013-04-05 14:03:35.000000000 +0200
-+++ mod_auth_mysql-3.0.0/mod_auth_mysql.c.bak	2013-04-05 14:03:01.000000000 +0200
+Index: mod_auth_mysql-3.0.0/mod_auth_mysql.c
+===================================================================
+--- mod_auth_mysql-3.0.0.orig/mod_auth_mysql.c
++++ mod_auth_mysql-3.0.0/mod_auth_mysql.c
 @@ -289,7 +289,6 @@
  #endif
  static short pw_sha1(POOL * pool, const char * real_pw, const char * sent_pw, const char * salt);
