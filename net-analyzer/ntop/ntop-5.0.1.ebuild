@@ -1,23 +1,24 @@
-# Copyright 1999-2011 Gentoo Foundation
+# Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-analyzer/ntop/ntop-4.0.3.ebuild,v 1.1 2011/05/26 16:18:18 hwoarang Exp $
+# $Header: $
 
-EAPI="2"
+EAPI="4"
 
-inherit eutils autotools
+PYTHON_DEPEND="2"
+
+inherit autotools eutils user python
 
 DESCRIPTION="Network traffic analyzer with web interface"
-HOMEPAGE="http://www.ntop.org/ntop.html"
-SRC_URI="mirror://sourceforge/ntop/${P}.tar.gz"
+HOMEPAGE="http://www.ntop.org/products/ntop/"
+SRC_URI="mirror://sourceforge/ntop/ntop/Stable/${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="amd64 ~arm ~hppa ~ia64 ~ppc ~ppc64 ~s390 ~sh ~sparc x86"
-IUSE="ipv6 ssl"
-#snmp support is disabled
+KEYWORDS="~amd64 ~arm ~hppa ~ia64 ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86"
+IUSE="snmp ssl"
 
-#snmp? ( net-analyzer/net-snmp )
-COMMON_DEPEND="sys-apps/gawk
+COMMON_DEPEND="
+	sys-apps/gawk
 	dev-lang/perl
 	sys-libs/gdbm
 	dev-libs/libevent
@@ -27,56 +28,38 @@ COMMON_DEPEND="sys-apps/gawk
 	net-analyzer/rrdtool
 	ssl? ( dev-libs/openssl )
 	sys-libs/zlib
-	>=dev-libs/geoip-1.4.5
-	>=dev-lang/lua-5.1.4"
+	dev-libs/geoip
+	dev-lang/lua
+	snmp? ( net-analyzer/net-snmp[ipv6] )"
 DEPEND="${COMMON_DEPEND}
-	>=sys-devel/libtool-1.4"
-
-# Needed by xmldumpPlugin - couldn't get it to work
-#	dev-libs/gdome2
-#	>=dev-libs/glib-2"
+	>=sys-devel/libtool-1.5.26"
 RDEPEND="${COMMON_DEPEND}
 	media-fonts/corefonts
 	media-gfx/graphviz
 	net-misc/wget
-	dev-vcs/subversion
-	app-arch/gzip"
+	app-arch/gzip
+	!arm? ( dev-libs/gdome2 )
+	dev-libs/glib:2"
 
 pkg_setup() {
-	# snmp doesn't compile in this release, disabled for now
-	#if use snmp ; then
-	#	ewarn "snmp plugin is under development and upstream does not recommend"
-	#	ewarn "it for usage in production environment."
-	#	if ! use ipv6 ; then
-	#		echo
-	#		eerror "snmp plugin has compilation problems without ipv6 support."
-	#		eerror "For additional information see bug #121497."
-	#		die "snmp without ipv6 is broken"
-	#	else
-	#		if ! built_with_use net-analyzer/net-snmp ipv6 ; then
-	#			echo
-	#			eerror "You have both ipv6 and snmp enabled."
-	#			eerror "This require ipv6 support in net-analyzer/net-snmp."
-	#			eerror "However, net-analyzer/net-snmp was compiled with ipv6 flag disabled."
-	#			eerror "Please, re-emerge net-analyzer/net-snmp with USE=\"ipv6\"."
-	#			die "net-analyzer/net-snmp was build without ipv6."
-	#		fi
-	#	fi
-	#fi
-
+	python_set_active_version 2
+	python_pkg_setup
 	enewgroup ntop
 	enewuser ntop -1 -1 /var/lib/ntop ntop
 }
 
 src_prepare() {
-#	epatch "${FILESDIR}"/${P}-gentoo.patch
-	cat acinclude.m4.in acinclude.m4.ntop > acinclude.m4
-	./autogen.sh || die "Failed to run autogen"
-#	eautoreconf
+	python_convert_shebangs -q -r 2 "${S}"
+	epatch "${FILESDIR}"/${P}-gentoo.patch
+#Waiting for the fix, see https://www.ntop.org/bugzilla3/show_bug.cgi?id=273
+#	epatch "${FILESDIR}"/${P}-system-ndpi.patch
+#	rm -r ./nDPI
+	cp /usr/share/aclocal/libtool.m4 libtool.m4.in
+	cat acinclude.m4.in libtool.m4.in acinclude.m4.ntop > acinclude.m4
+	eautoreconf
 }
 
 src_configure() {
-	# force disable xmldumpPlugin
 	export \
 		ac_cv_header_glib_h=no \
 		ac_cv_header_glibconfig_h=no \
@@ -85,14 +68,22 @@ src_configure() {
 		ac_cv_lib_xml2_xmlCheckVersion=no \
 		ac_cv_lib_gdome_gdome_di_saveDocToFile=no
 
-#	econf \
-#		$(use_enable ipv6) \
-#		$(use_with ssl) \
-#		--enable-mysql \
-#		--with-rrd-home=/usr/lib \
-#		--disable-snmp \
-#		|| die "configure problem"
-		# $(use_enable snmp)
+	cd ./nDPI
+	econf
+	cd ..
+
+	econf \
+		$(use_enable snmp) \
+		$(use_with ssl) \
+		--with-rrd-home=/usr/lib \
+		|| die "configure problem"
+}
+
+src_compile() {
+	cd ./nDPI
+	emake
+	cd ..
+	default_src_compile
 }
 
 src_install() {
@@ -104,6 +95,8 @@ src_install() {
 		fperms 750 /var/lib/ntop ||
 		die "failed to prepare /var/lib/ntop dir"
 	insinto /var/lib/ntop
+	gunzip 3rd_party/GeoIPASNum.dat.gz
+	gunzip 3rd_party/GeoLiteCity.dat.gz
 	local f
 	for f in GeoIPASNum.dat GeoLiteCity.dat; do
 		# Don't install included GeoIP files if newer versions are available
