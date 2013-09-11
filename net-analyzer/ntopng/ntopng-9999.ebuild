@@ -28,9 +28,18 @@ DEPEND="${COMMON_DEPEND}"
 RDEPEND="${COMMON_DEPEND}
 dev-db/redis"
 
+pkg_setup() {
+    python_set_active_version 2
+    python_pkg_setup
+    enewgroup ntop
+    enewuser ntop -1 -1 /var/lib/ntop ntop
+}
+
+
 src_install()
 {
 	emake geoip
+	emake install
 	SHARE_NTOPNG_DIR="/usr/share/${PN}"
 	dodir ${SHARE_NTOPNG_DIR} || die "Failed creating ${PN} shared directory"
 	insinto ${SHARE_NTOPNG_DIR}
