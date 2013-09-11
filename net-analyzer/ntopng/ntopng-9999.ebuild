@@ -53,6 +53,9 @@ src_install()
 	doexe ${PN} || die "Failed installing the main executable failed"
 
 	doman ${PN}.8 || die "Failed installing the man failed"
+
+	newinitd "${FILESDIR}"/ntop-initd ntopng
+	newconfd "${FILESDIR}"/ntop-confd ntopng
 }
 
 pkg_postinst()
