@@ -29,8 +29,6 @@ RDEPEND="${COMMON_DEPEND}
 dev-db/redis"
 
 pkg_setup() {
-    python_set_active_version 2
-    python_pkg_setup
     enewgroup ntop
     enewuser ntop -1 -1 /var/lib/ntop ntop
 }
