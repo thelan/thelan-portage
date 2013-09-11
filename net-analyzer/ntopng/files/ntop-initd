@@ -8,14 +8,19 @@ depend() {
 
 start() {
 	ebegin "Starting ntop"
+	if [ ! -d /var/run/ntopng ]
+	then
+		mkdir /var/run/ntopng
+		chown ntop /var/run/ntopng
+	fi
 	export LC_ALL=C # apparently doesn't work with some locales (#191576 and #205382)
 	export GDFONTPATH=/usr/share/fonts/corefonts # apparently the only font that works (#231705)
-	start-stop-daemon --start --exec /usr/bin/ntopng -- -e --pid /var/run/ntopng.pid -L ${NTOP_OPTS}
+	start-stop-daemon --start --exec /usr/bin/ntopng -- -e --pid /var/run/ntopng/ntopng.pid ${NTOP_OPTS}
 	eend $?
 }
 
 stop() {
 	ebegin "Stopping ntop"
-	start-stop-daemon --stop --retry 30 --pidfile /var/run/ntopng.pid
+	start-stop-daemon --stop --retry 30 --pidfile /var/run/ntopng/ntopng.pid
 	eend $?
 }
