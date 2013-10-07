@@ -4,9 +4,13 @@
 
 EAPI="3"
 
+inherit git-2
+
 DESCRIPTION="MCollective plug-in that manages the puppet agent daemon."
 HOMEPAGE="https://github.com/puppetlabs/mcollective-puppet-agent"
-SRC_URI="http://downloads.mad-hacking.net/software/${P}.tar.bz2"
+SRC_URI=""
+EGIT_REPO_URI="https://github.com/puppetlabs/mcollective-puppet-agent.git"
+
 
 LICENSE="GPL-3"
 SLOT="0"
