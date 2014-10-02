@@ -36,7 +36,7 @@ pkg_setup() {
 
 src_install()
 {
-	emake geoip
+	#emake geoip
 	SHARE_NTOPNG_DIR="/usr/share/${PN}"
 	dodir ${SHARE_NTOPNG_DIR} || die "Failed creating ${PN} shared directory"
 	insinto ${SHARE_NTOPNG_DIR}
