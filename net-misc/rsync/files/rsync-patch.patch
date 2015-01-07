@@ -1,17 +1,5 @@
-This patch adds the --copy-devices option, which will try to copy
-the data inside a device instead of duplicating the device node.
-
-To use this patch, run these commands for a successful build:
-
-    patch -p1 <patches/copy-devices.diff
-    ./prepare-source
-    ./configure                      (optional if already run)
-    make
-
-based-on: 40afd365cc8ca968fd16e161d24df5b8a8a520cc
-diff --git a/generator.c b/generator.c
---- a/generator.c
-+++ b/generator.c
+--- a/generator.c	2009-12-23 19:36:27.000000000 +0000
++++ b/generator.c	2010-06-15 11:08:41.919557425 +0100
 @@ -39,6 +39,7 @@ extern int preserve_acls;
  extern int preserve_xattrs;
  extern int preserve_links;
@@ -20,7 +8,16 @@ diff --git a/generator.c b/generator.c
  extern int preserve_specials;
  extern int preserve_hard_links;
  extern int preserve_executability;
-@@ -1751,7 +1752,7 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
+@@ -980,7 +981,7 @@ static int try_dests_reg(struct file_str
+ 
+ 	do {
+ 		pathjoin(cmpbuf, MAXPATHLEN, basis_dir[j], fname);
+-		if (link_stat(cmpbuf, &sxp->st, 0) < 0 || !S_ISREG(sxp->st.st_mode))
++		if (link_stat(cmpbuf, &sxp->st, 0) < 0 || !(S_ISREG(sxp->st.st_mode) || (copy_devices && IS_DEVICE(sxp->st.st_mode))))
+ 			continue;
+ 		switch (match_level) {
+ 		case 0:
+@@ -1695,7 +1696,7 @@ static void recv_generator(char *fname, 
  		goto cleanup;
  	}
  
@@ -29,9 +26,45 @@ diff --git a/generator.c b/generator.c
  		if (solo_file)
  			fname = f_name(file, NULL);
  		rprintf(FINFO, "skipping non-regular file \"%s\"\n", fname);
-diff --git a/options.c b/options.c
---- a/options.c
-+++ b/options.c
+@@ -1733,7 +1734,7 @@ static void recv_generator(char *fname, 
+ 	fnamecmp = fname;
+ 	fnamecmp_type = FNAMECMP_FNAME;
+ 
+-	if (statret == 0 && !S_ISREG(sx.st.st_mode)) {
++	if (statret == 0 && !(S_ISREG(sx.st.st_mode) || (copy_devices && IS_DEVICE(sx.st.st_mode)))) {
+ 		if (delete_item(fname, sx.st.st_mode, del_opts | DEL_FOR_FILE) != 0)
+ 			goto cleanup;
+ 		statret = -1;
+@@ -1820,6 +1821,26 @@ static void recv_generator(char *fname, 
+ 		goto cleanup;
+ 	}
+ 
++	/* On Linux systems (at least), st_size is typically 0 for devices.
++	 * If so, try to determine the actual device size. */
++	if (IS_DEVICE(sx.st.st_mode) && sx.st.st_size == 0) {
++	        int fd;
++
++		fd = open(fname, O_RDONLY);
++
++		if (fd < 0)
++			rsyserr(FERROR, errno, "failed to open %s to determine size", fname);
++		else {
++			OFF_T off = lseek(fd, 0, SEEK_END);
++			if (off == (OFF_T) -1)
++				rsyserr(FERROR, errno, "failed to seek to end of %s to determine size", fname);
++			else {
++				sx.st.st_size = off;
++			}
++			close(fd);
++		}
++	}
++
+ 	if (append_mode > 0 && sx.st.st_size >= F_LENGTH(file)) {
+ #ifdef SUPPORT_HARD_LINKS
+ 		if (F_IS_HLINKED(file))
+diff -pur a/options.c b/options.c
+--- a/options.c	2009-12-21 22:40:41.000000000 +0000
++++ b/options.c	2010-06-14 10:24:49.329958121 +0100
 @@ -48,6 +48,7 @@ int append_mode = 0;
  int keep_dirlinks = 0;
  int copy_dirlinks = 0;
@@ -40,7 +73,7 @@ diff --git a/options.c b/options.c
  int preserve_links = 0;
  int preserve_hard_links = 0;
  int preserve_acls = 0;
-@@ -348,6 +349,7 @@ void usage(enum logcode F)
+@@ -349,6 +350,7 @@ void usage(enum logcode F)
    rprintf(F," -o, --owner                 preserve owner (super-user only)\n");
    rprintf(F," -g, --group                 preserve group\n");
    rprintf(F,"     --devices               preserve device files (super-user only)\n");
@@ -48,7 +81,7 @@ diff --git a/options.c b/options.c
    rprintf(F,"     --specials              preserve special files\n");
    rprintf(F," -D                          same as --devices --specials\n");
    rprintf(F," -t, --times                 preserve modification times\n");
-@@ -506,6 +508,7 @@ static struct poptOption long_options[] = {
+@@ -507,6 +509,7 @@ static struct poptOption long_options[] 
    {"no-D",             0,  POPT_ARG_NONE,   0, OPT_NO_D, 0, 0 },
    {"devices",          0,  POPT_ARG_VAL,    &preserve_devices, 1, 0, 0 },
    {"no-devices",       0,  POPT_ARG_VAL,    &preserve_devices, 0, 0, 0 },
@@ -56,7 +89,7 @@ diff --git a/options.c b/options.c
    {"specials",         0,  POPT_ARG_VAL,    &preserve_specials, 1, 0, 0 },
    {"no-specials",      0,  POPT_ARG_VAL,    &preserve_specials, 0, 0, 0 },
    {"links",           'l', POPT_ARG_VAL,    &preserve_links, 1, 0, 0 },
-@@ -2074,6 +2077,9 @@ void server_options(char **args, int *argc_p)
+@@ -2069,6 +2072,9 @@ void server_options(char **args, int *ar
  	else if (remove_source_files)
  		args[ac++] = "--remove-sent-files";
  
@@ -66,9 +99,56 @@ diff --git a/options.c b/options.c
  	if (ac > MAX_SERVER_ARGS) { /* Not possible... */
  		rprintf(FERROR, "argc overflow in server_options().\n");
  		exit_cleanup(RERR_MALLOC);
-diff --git a/rsync.c b/rsync.c
---- a/rsync.c
-+++ b/rsync.c
+diff -pur a/receiver.c b/receiver.c
+--- a/receiver.c	2009-04-12 20:48:59.000000000 +0100
++++ b/receiver.c	2010-06-15 15:13:13.577550534 +0100
+@@ -49,6 +49,7 @@ extern int keep_partial;
+ extern int checksum_seed;
+ extern int inplace;
+ extern int delay_updates;
++extern int copy_devices;
+ extern mode_t orig_umask;
+ extern struct stats stats;
+ extern char *tmpdir;
+@@ -286,7 +287,7 @@ static int receive_data(int f_in, char *
+ 
+ #ifdef HAVE_FTRUNCATE
+ 	if (inplace && fd != -1
+-	 && ftruncate(fd, offset) < 0) {
++	 && offset < size_r && ftruncate(fd, offset) < 0) {
+ 		rsyserr(FERROR_XFER, errno, "ftruncate failed on %s",
+ 			full_fname(fname));
+ 	}
+@@ -668,11 +669,25 @@ int recv_files(int f_in, char *local_nam
+ 			continue;
+ 		}
+ 
+-		if (fd1 != -1 && !S_ISREG(st.st_mode)) {
++		if (fd1 != -1 && !(S_ISREG(st.st_mode) || (copy_devices && IS_DEVICE(st.st_mode)))) {
+ 			close(fd1);
+ 			fd1 = -1;
+ 		}
+ 
++		/* On Linux systems (at least), st_size is typically 0 for devices.
++		 * If so, try to determine the actual device size. */
++		if (fd1 != -1 && IS_DEVICE(st.st_mode) && st.st_size == 0) {
++			OFF_T off = lseek(fd1, 0, SEEK_END);
++			if (off == (OFF_T) -1)
++				rsyserr(FERROR, errno, "failed to seek to end of %s to determine size", fname);
++			else {
++				st.st_size = off;
++				off = lseek(fd1, 0, SEEK_SET);
++				if (off != 0)
++					rsyserr(FERROR, errno, "failed to seek back to beginning of %s to read it", fname);
++			}
++		}
++
+ 		/* If we're not preserving permissions, change the file-list's
+ 		 * mode based on the local permissions and some heuristics. */
+ 		if (!preserve_perms) {
+diff -pur a/rsync.c b/rsync.c
+--- a/rsync.c	2009-12-19 21:39:49.000000000 +0000
++++ b/rsync.c	2010-06-14 10:24:49.339960221 +0100
 @@ -34,6 +34,7 @@ extern int preserve_xattrs;
  extern int preserve_perms;
  extern int preserve_executability;
@@ -77,7 +157,7 @@ diff --git a/rsync.c b/rsync.c
  extern int am_root;
  extern int am_server;
  extern int am_sender;
-@@ -326,7 +327,8 @@ int read_ndx_and_attrs(int f_in, int *iflag_ptr, uchar *type_ptr,
+@@ -328,7 +329,8 @@ int read_ndx_and_attrs(int f_in, int *if
  
  	if (iflags & ITEM_TRANSFER) {
  		int i = ndx - cur_flist->ndx_start;
@@ -87,9 +167,9 @@ diff --git a/rsync.c b/rsync.c
  			rprintf(FERROR,
  				"received request to transfer non-regular file: %d [%s]\n",
  				ndx, who_am_i());
-diff --git a/sender.c b/sender.c
---- a/sender.c
-+++ b/sender.c
+diff -pur a/sender.c b/sender.c
+--- a/sender.c	2009-12-13 01:23:03.000000000 +0000
++++ b/sender.c	2010-06-15 15:09:50.657553229 +0100
 @@ -309,6 +309,20 @@ void send_files(int f_in, int f_out)
  			exit_cleanup(RERR_PROTOCOL);
  		}
