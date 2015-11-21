@@ -37,7 +37,7 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-2.3.3-libkate.patch
 	# bug #430434
 	epatch "${FILESDIR}"/${PN}-2.3.3-fix-xiph_openssl.patch
-	use patchua && epatch "${FILESDIR}"/fuse-2.6.1-kernel-fix.patch
+	use patchua && epatch "${FILESDIR}"/${PN}-2.4.2-user-agent.patch
 	eautoreconf
 }
 
