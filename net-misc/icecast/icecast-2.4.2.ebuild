@@ -12,7 +12,7 @@ SRC_URI="http://downloads.xiph.org/releases/icecast/${P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="amd64 ppc ppc64 x86 ~x86-fbsd"
-IUSE="kate logrotate +speex +ssl +theora +yp uapatch"
+IUSE="kate logrotate +speex +ssl +theora +yp"
 
 #Although there is a --with-ogg and --with-orbis configure option, they're
 #only useful for specifying paths, not for disabling.
@@ -37,7 +37,8 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-2.3.3-libkate.patch
 	# bug #430434
 	epatch "${FILESDIR}"/${PN}-2.3.3-fix-xiph_openssl.patch
-	use patchua && epatch "${FILESDIR}"/${PN}-2.4.2-user-agent.patch
+	# Custom patch
+	epatch "${FILESDIR}"/${PN}-2.4.2-user-agent.patch
 	eautoreconf
 }
 
