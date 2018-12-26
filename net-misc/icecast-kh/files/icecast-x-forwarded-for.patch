@@ -1,0 +1,58 @@
+diff -Naur a/src/admin.c b/src/admin.c
+--- a/src/admin.c	2010-10-09 14:18:04.514190647 +0200
++++ b/src/admin.c	2010-10-10 01:35:48.497043001 +0200
+@@ -635,7 +635,7 @@
+     avl_node *client_node;
+     client_t *current;
+     char buf[22];
+-    const char *userAgent = NULL;
++    const char *userAgent = NULL, *realIP = NULL;
+     time_t now = time(NULL);
+ 
+     doc = xmlNewDoc (XMLSTR("1.0"));
+@@ -654,7 +654,13 @@
+     while(client_node) {
+         current = (client_t *)client_node->key;
+         listenernode = xmlNewChild(srcnode, NULL, XMLSTR("listener"), NULL);
+-        xmlNewChild(listenernode, NULL, XMLSTR("IP"), XMLSTR(current->con->ip));
++        realIP = httpp_getvar(current->parser, "x-forwarded-for");
++        if (realIP) {
++            xmlNewChild(listenernode, NULL, XMLSTR("IP"), XMLSTR(realIP));
++        }
++        else {
++            xmlNewChild(listenernode, NULL, XMLSTR("IP"), XMLSTR(current->con->ip));
++        }
+         userAgent = httpp_getvar(current->parser, "user-agent");
+         if (userAgent) {
+             xmlNewChild(listenernode, NULL, XMLSTR("UserAgent"), XMLSTR(userAgent));
+diff -Naur a/src/logging.c b/src/logging.c
+--- a/src/logging.c	2010-10-09 14:18:04.514190647 +0200
++++ b/src/logging.c	2010-10-09 14:18:04.514190647 +0200
+@@ -115,7 +115,7 @@
+     struct tm thetime;
+     time_t now;
+     time_t stayed;
+-    const char *referrer, *user_agent, *username;
++    const char *referrer, *user_agent, *username, *real_ip;
+ 
+     now = time(NULL);
+ 
+@@ -145,13 +145,17 @@
+     if (referrer == NULL)
+         referrer = "-";
+ 
++    real_ip = httpp_getvar (client->parser, "x-forwarded-for");
++    if (real_ip == NULL)
++        real_ip = client->con->ip;
++
+     user_agent = httpp_getvar (client->parser, "user-agent");
+     if (user_agent == NULL)
+         user_agent = "-";
+ 
+     log_write_direct (accesslog,
+             "%s - %s [%s] \"%s\" %d %" PRIu64 " \"%s\" \"%s\" %lu",
+-            client->con->ip,
++            real_ip,
+             username,
+             datebuf,
+             reqbuf,
